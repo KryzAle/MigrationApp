@@ -7,10 +7,10 @@ import (
 )
 
 type UserSkillOrm struct {
-	ID uint `gorm:"primaryKey"`
-	// We are using UserEmail instead of UserId because Users are stored in Notion and we reference users by Email
-	UserEmail  string `gorm:"uniqueIndex:idx_useremail_skillid"`
-	SkillID    uint   `gorm:"uniqueIndex:idx_useremail_skillid"`
+	ID         uint   `gorm:"primaryKey"`
+	UserId     uint   `gorm:"uniqueIndex:idx_userid_skillid"`
+	SkillID    uint   `gorm:"uniqueIndex:idx_userid_skillid"`
+	UserEmail  string `gorm:"index,unique"`
 	Experience uint
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

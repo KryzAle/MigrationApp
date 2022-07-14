@@ -27,7 +27,7 @@ func (TemporalRepository *TemporalMigrationRepository) Init() *TemporalMigration
 
 func main() {
 	temporalRepository := new(TemporalMigrationRepository).Init()
-	//temporalRepository.migrateCategoriesAndSkills()
+	temporalRepository.migrateCategoriesAndSkills()
 	temporalRepository.migrateUserSkills()
 }
 
@@ -166,13 +166,13 @@ func (TemporalRepository *TemporalMigrationRepository) migrateUserSkills() {
 	}
 
 	for _, userSkill := range userSkillsFromProto.Data {
-		TemporalRepository.CreateUser(userSkill.Email, userSkill.English)
+		userPostgresID, _ := TemporalRepository.CreateUser(userSkill.Email, userSkill.English)
 		for _, skill := range userSkill.UserSkills {
 			skillId, err := TemporalRepository.GetSkillIdByName(skill.SkillName)
 			if err != nil {
 				panic(err)
 			}
-			TemporalRepository.CreateUserSkill(userSkill.Email, skillId, skill.Level)
+			TemporalRepository.CreateUserSkill(userPostgresID, userSkill.Email, skillId, skill.Level)
 		}
 	}
 }
@@ -190,10 +190,10 @@ func (TemporalRepository *TemporalMigrationRepository) GetSkillIdByName(skillNam
 func (TemporalRepository *TemporalMigrationRepository) CreateSkill(skillName string, categoryId uint) error {
 
 	skill := db.SkillOrm{
-		Name:      skillName,
-		CategorId: categoryId,
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
+		Name:       skillName,
+		CategoryId: categoryId,
+		CreatedAt:  time.Time{},
+		UpdatedAt:  time.Time{},
 	}
 
 	result := TemporalRepository.connection.Create(&skill)
@@ -220,7 +220,7 @@ func (TemporalRepository *TemporalMigrationRepository) CreateCategory(categoryNa
 
 	return category.ID, nil
 }
-func (TemporalRepository *TemporalMigrationRepository) CreateUser(email string, englishLevel uint) error {
+func (TemporalRepository *TemporalMigrationRepository) CreateUser(email string, englishLevel uint) (uint, error) {
 
 	user := db.UserOrm{
 		Email:        email,
@@ -230,16 +230,17 @@ func (TemporalRepository *TemporalMigrationRepository) CreateUser(email string, 
 	result := TemporalRepository.connection.Create(&user)
 
 	if result.Error != nil {
-		return errors.New("error inserting new user")
+		return 0, errors.New("error inserting new user")
 	}
 
-	return nil
+	return user.ID, nil
 }
-func (TemporalRepository *TemporalMigrationRepository) CreateUserSkill(userEmail string, skillId uint, experience uint) error {
+func (TemporalRepository *TemporalMigrationRepository) CreateUserSkill(userPostgresID uint, userEmail string, skillId uint, experience uint) error {
 
 	userSkill := db.UserSkillOrm{
-		UserEmail:  userEmail,
+		UserId:     userPostgresID,
 		SkillID:    skillId,
+		UserEmail:  userEmail,
 		Experience: experience,
 	}
 

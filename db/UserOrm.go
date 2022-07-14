@@ -9,7 +9,7 @@ import (
 type UserOrm struct {
 	ID           uint `gorm:"primaryKey"`
 	Name         string
-	Email        string `gorm:"index,unique"`
+	Email        string `gorm:"uniqueIndex"`
 	Biography    string
 	CvUrl        string
 	EnglishLevel uint
