@@ -27,6 +27,7 @@ func (TemporalRepository *TemporalMigrationRepository) Init() *TemporalMigration
 
 func main() {
 	temporalRepository := new(TemporalMigrationRepository).Init()
+	//temporalRepository.connection.AutoMigrate(&db.UserOrm{}, &db.SkillOrm{}, &db.CategoryOrm{}, &db.UserSkillOrm{})
 	temporalRepository.migrateCategoriesAndSkills()
 	temporalRepository.migrateUserSkills()
 }
@@ -42,111 +43,24 @@ func getJsonFile(fileName string) ([]byte, error) {
 
 func (TemporalRepository *TemporalMigrationRepository) migrateCategoriesAndSkills() {
 	var technologiesFromProto adaptersfromproto.TechnologiesFromProtoAdapter
+	var categories = []string{"languages", "databases", "cloud_platforms", "web_frameworks", "other_frameworks_and_libraries", "other_tools", "operating_systems", "quality_assurance_tools"}
 	technologiesBytes, err := getJsonFile("technologies.json")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	err = json.Unmarshal(technologiesBytes, &technologiesFromProto)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	languagesId, err := TemporalRepository.CreateCategory("languages")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "languages" {
-			err := TemporalRepository.CreateSkill(technology.Label, languagesId)
-			if err != nil {
-				panic(err)
-			}
+	for _, category := range categories {
+		categoryId, err := TemporalRepository.CreateCategory(category)
+		if err != nil {
+			panic(err)
 		}
-	}
-	cloud_platformsId, err := TemporalRepository.CreateCategory("cloud_platforms")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "cloud_platforms" {
-			err := TemporalRepository.CreateSkill(technology.Label, cloud_platformsId)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	web_frameworksId, err := TemporalRepository.CreateCategory("web_frameworks")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "web_frameworks" {
-			err := TemporalRepository.CreateSkill(technology.Label, web_frameworksId)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-
-	databasesId, err := TemporalRepository.CreateCategory("databases")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "databases" {
-			err := TemporalRepository.CreateSkill(technology.Label, databasesId)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	other_frameworks_and_librariesId, err := TemporalRepository.CreateCategory("other_frameworks_and_libraries")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "other_frameworks_and_libraries" {
-			err := TemporalRepository.CreateSkill(technology.Label, other_frameworks_and_librariesId)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	other_toolsId, err := TemporalRepository.CreateCategory("other_tools")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "other_tools" {
-			err := TemporalRepository.CreateSkill(technology.Label, other_toolsId)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	operating_systemsId, err := TemporalRepository.CreateCategory("operating_systems")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "operating_systems" {
-			err := TemporalRepository.CreateSkill(technology.Label, operating_systemsId)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	quality_assurance_toolsId, err := TemporalRepository.CreateCategory("quality_assurance_tools")
-	if err != nil {
-		panic(err)
-	}
-	for _, technology := range technologiesFromProto.Technologies {
-		if technology.Category == "quality_assurance_tools" {
-			err := TemporalRepository.CreateSkill(technology.Label, quality_assurance_toolsId)
-			if err != nil {
-				panic(err)
+		for _, technology := range technologiesFromProto.Technologies {
+			if technology.Category == category {
+				TemporalRepository.CreateSkill(technology.Label, categoryId)
 			}
 		}
 	}
